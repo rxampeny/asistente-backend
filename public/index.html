@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat con Asistente AI</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; background-color: #f9f9f9; text-align: center; }
+    #chat-box { max-width: 600px; margin: 0 auto; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    input, button { padding: 0.5rem; margin-top: 1rem; width: 100%; }
+    #respuesta { margin-top: 1rem; background: #efefef; padding: 0.5rem; border-radius: 4px; min-height: 80px; }
+  </style>
+</head>
+<body>
+  <h2>Chat con Asistente AI</h2>
+  <div id="chat-box">
+    <input id="input" placeholder="Escribe tu mensaje..." />
+    <button onclick="enviarMensaje()">Enviar</button>
+    <div id="respuesta">Aquí aparecerá la respuesta...</div>
+  </div>
+
+  <script>
+    async function enviarMensaje() {
+      const mensaje = document.getElementById("input").value;
+      const respuestaDiv = document.getElementById("respuesta");
+      respuestaDiv.textContent = "Cargando...";
+
+      try {
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: mensaje })
+        });
+        const data = await res.json();
+        respuestaDiv.textContent = data.response;
+      } catch {
+        respuestaDiv.textContent = "Error al contactar al asistente.";
+      }
+    }
+  </script>
+</body>
+</html>
