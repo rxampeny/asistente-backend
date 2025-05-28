@@ -42,12 +42,13 @@ app.post('/chat', async (req, res) => {
     });
 
     let runStatus;
-    do {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      runStatus = await axios.get(`https://api.openai.com/v1/threads/${thread.data.id}/runs/${run.data.id}`, {
-        headers: openaiHeaders
-      });
-    } while (runStatus.data.status !== 'completed');
+do {
+  await new Promise(resolve => setTimeout(resolve, 500)); // tiempo reducido
+  runStatus = await axios.get(`https://api.openai.com/v1/threads/${thread.data.id}/runs/${run.data.id}`, {
+    headers: openaiHeaders
+  });
+} while (runStatus.data.status !== 'completed');
+
 
     const messages = await axios.get(`https://api.openai.com/v1/threads/${thread.data.id}/messages`, {
       headers: openaiHeaders
