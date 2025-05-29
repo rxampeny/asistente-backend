@@ -4,9 +4,6 @@ import axios from 'axios';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-let rawText = assistantMessage?.content?.[0]?.text?.value || "No hubo respuesta del asistente.";
-const assistantResponse = rawText.replace(/【.*?†.*?】/g, '').trim();
-
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
