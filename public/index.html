@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <title>Chat con Asistente AI</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\\\(', '\\\\)']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -13,7 +20,7 @@
     }
 
     #chat-box {
-      max-width: 700px;
+      max-width: 800px;
       margin: 0 auto;
       background: white;
       padding: 1rem;
@@ -21,20 +28,30 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
-    input, button {
+    input {
       padding: 0.5rem;
       margin-top: 1rem;
       width: 100%;
       font-size: 1rem;
     }
 
-    .respuesta {
-      margin-top: 1rem;
+    button {
+      padding: 0.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .bloque {
       background: #f0f0f0;
       padding: 1rem;
       border-radius: 6px;
+      margin-bottom: 1rem;
       text-align: left;
-      font-family: system-ui, sans-serif;
+    }
+
+    .pregunta {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
     }
 
     .respuesta a {
@@ -42,18 +59,20 @@
       text-decoration: underline;
     }
 
-    .mensaje-usuario {
-      font-weight: bold;
+    #historial {
       margin-top: 1rem;
-      text-align: left;
+      max-height: 500px;
+      overflow-y: auto;
     }
 
-    #historial {
+    .botones {
       display: flex;
-      flex-direction: column-reverse;
-      overflow-y: auto;
-      max-height: 400px;
+      gap: 0.5rem;
       margin-top: 1rem;
+    }
+
+    .botones button {
+      flex: 1;
     }
   </style>
 </head>
@@ -61,7 +80,10 @@
   <h2>Chat con Asistente AI</h2>
   <div id="chat-box">
     <input id="input" placeholder="Escribe tu mensaje..." />
-    <button onclick="enviarMensaje()">Enviar</button>
+    <div class="botones">
+      <button onclick="enviarMensaje()">Enviar</button>
+      <button onclick="limpiarHistorial()" style="background:#ddd;">Limpiar historial</button>
+    </div>
     <div id="historial"></div>
   </div>
 
@@ -78,24 +100,22 @@
     async function enviarMensaje() {
       const mensaje = input.value.trim();
       if (!mensaje) return;
-
-      const mensajeUsuario = document.createElement("div");
-      mensajeUsuario.className = "mensaje-usuario";
-      mensajeUsuario.textContent = "Tú: " + mensaje;
-
-      const respuestaDiv = document.createElement("div");
-      respuestaDiv.className = "respuesta";
-      respuestaDiv.textContent = "Cargando...";
-
-      // prepend nuevos mensajes
-      historialDiv.prepend(respuestaDiv);
-      historialDiv.prepend(mensajeUsuario);
-
-      // limpiar input
       input.value = "";
 
-      // scroll automático al top
-      historialDiv.scrollTop = 0;
+      const bloque = document.createElement("div");
+      bloque.className = "bloque";
+
+      const preguntaEl = document.createElement("div");
+      preguntaEl.className = "pregunta";
+      preguntaEl.textContent = "Tú: " + mensaje;
+
+      const respuestaEl = document.createElement("div");
+      respuestaEl.className = "respuesta";
+      respuestaEl.innerHTML = "<em>Cargando...</em>";
+
+      bloque.appendChild(preguntaEl);
+      bloque.appendChild(respuestaEl);
+      historialDiv.prepend(bloque);
 
       try {
         const res = await fetch("/chat", {
@@ -109,10 +129,15 @@
 
         const data = await res.json();
         const markdown = data.response;
-        respuestaDiv.innerHTML = marked.parse(markdown);
+        respuestaEl.innerHTML = marked.parse(markdown);
+        if (window.MathJax) MathJax.typesetPromise([respuestaEl]);
       } catch {
-        respuestaDiv.textContent = "Error al contactar al asistente.";
+        respuestaEl.innerHTML = "<em>Error al contactar al asistente.</em>";
       }
+    }
+
+    function limpiarHistorial() {
+      historialDiv.innerHTML = "";
     }
   </script>
 </body>
