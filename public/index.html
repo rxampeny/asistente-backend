@@ -129,7 +129,11 @@
 
         const data = await res.json();
         const markdown = data.response;
-        respuestaEl.innerHTML = marked.parse(markdown);
+        // Arreglo para que [ ... ] se interprete como ecuación LaTeX de bloque
+let latexFix = markdown.replace(/\[\s*(.*?)\s*\]/gs, '\\[$1\\]');
+respuestaEl.innerHTML = marked.parse(latexFix);
+if (window.MathJax) MathJax.typesetPromise([respuestaEl]);
+
         if (window.MathJax) MathJax.typesetPromise([respuestaEl]);
       } catch {
         respuestaEl.innerHTML = "<em>Error al contactar al asistente.</em>";
