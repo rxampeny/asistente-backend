@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Chat con Asistente AI</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
@@ -90,6 +90,7 @@
   <script>
     const input = document.getElementById("input");
     const historialDiv = document.getElementById("historial");
+    const sessionId = "usuario-demo";
 
     input.addEventListener("keydown", function (e) {
       if (e.key === "Enter") {
@@ -123,16 +124,16 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             message: mensaje,
-            session_id: "usuario-demo"
+            session_id: sessionId
           })
         });
 
         const data = await res.json();
         let markdown = data.response;
 
-        // ✅ Arreglos para LaTeX block e inline
+        // ✅ Arreglos para fórmulas en bloque e inline
         markdown = markdown.replace(/\[\s*(.*?)\s*\]/gs, '\\[$1\\]');
-        markdown = markdown.replace(/\\?\\?\(([^()]+?)\\?\\?\)/g, '\\($1\\)');
+        markdown = markdown.replace(/\\?\(([^()]*\\?[^()]*)\\?\)/g, '\\($1\\)');
 
         respuestaEl.innerHTML = marked.parse(markdown);
         if (window.MathJax) MathJax.typesetPromise([respuestaEl]);
@@ -141,10 +142,21 @@
       }
     }
 
-    function limpiarHistorial() {
+    async function limpiarHistorial() {
       historialDiv.innerHTML = "";
+
+      try {
+        await fetch("/clear", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: sessionId })
+        });
+      } catch (e) {
+        console.warn("No se pudo borrar la sesión del backend.");
+      }
     }
   </script>
 </body>
 </html>
+
 
