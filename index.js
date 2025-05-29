@@ -20,61 +20,67 @@ const openaiHeaders = {
   'OpenAI-Beta': 'assistants=v2'
 };
 
+// 🧠 Memoria: thread_id por sesión (simple en memoria)
+const threads = {};
+
 app.post('/chat', async (req, res) => {
-  const userMessage = req.body.message;
+  const { message, session_id } = req.body;
+  if (!message || !session_id) {
+    return res.status(400).json({ error: "Faltan 'message' o 'session_id'." });
+  }
 
   try {
-    const thread = await axios.post('https://api.openai.com/v1/threads', {}, {
-      headers: openaiHeaders
-    });
+    let thread_id = threads[session_id];
 
-    await axios.post(`https://api.openai.com/v1/threads/${thread.data.id}/messages`, {
+    // Si no hay thread todavía, lo creamos
+    if (!thread_id) {
+      const thread = await axios.post('https://api.openai.com/v1/threads', {}, {
+        headers: openaiHeaders
+      });
+      thread_id = thread.data.id;
+      threads[session_id] = thread_id;
+    }
+
+    // Añadir el mensaje al thread
+    await axios.post(`https://api.openai.com/v1/threads/${thread_id}/messages`, {
       role: "user",
-      content: userMessage
-    }, {
-      headers: openaiHeaders
-    });
+      content: message
+    }, { headers: openaiHeaders });
 
-    const run = await axios.post(`https://api.openai.com/v1/threads/${thread.data.id}/runs`, {
+    // Lanzar el asistente
+    const run = await axios.post(`https://api.openai.com/v1/threads/${thread_id}/runs`, {
       assistant_id: ASSISTANT_ID
-    }, {
-      headers: openaiHeaders
-    });
+    }, { headers: openaiHeaders });
 
+    // Esperar a que se complete
     let runStatus;
-do {
-  await new Promise(resolve => setTimeout(resolve, 500)); // tiempo reducido
-  runStatus = await axios.get(`https://api.openai.com/v1/threads/${thread.data.id}/runs/${run.data.id}`, {
-    headers: openaiHeaders
-  });
-} while (runStatus.data.status !== 'completed');
+    do {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      runStatus = await axios.get(`https://api.openai.com/v1/threads/${thread_id}/runs/${run.data.id}`, {
+        headers: openaiHeaders
+      });
+    } while (runStatus.data.status !== 'completed');
 
-
-    const messages = await axios.get(`https://api.openai.com/v1/threads/${thread.data.id}/messages`, {
+    // Obtener la respuesta del asistente
+    const messages = await axios.get(`https://api.openai.com/v1/threads/${thread_id}/messages`, {
       headers: openaiHeaders
     });
 
     const assistantMessage = messages.data.data.find(msg => msg.role === 'assistant');
     const assistantResponse = assistantMessage?.content?.[0]?.text?.value || "No hubo respuesta del asistente.";
 
-    console.log("🟢 Respuesta del asistente:", assistantResponse);
+    console.log("🟢 Respuesta:", assistantResponse);
     res.json({ response: assistantResponse });
   } catch (error) {
-    console.error("🔴 Error al contactar OpenAI:");
+    console.error("🔴 Error:");
     if (error.response) {
       console.error("🔸 Status:", error.response.status);
       console.error("🔸 Data:", error.response.data);
       res.status(500).json({
-        error: "Fallo con OpenAI",
-        status: error.response.status,
-        details: error.response.data,
+        error: error.response.data
       });
     } else {
-      console.error("🔸 Error sin respuesta:", error.message);
-      res.status(500).json({
-        error: "Fallo inesperado",
-        message: error.message
-      });
+      res.status(500).json({ error: error.message });
     }
   }
 });
