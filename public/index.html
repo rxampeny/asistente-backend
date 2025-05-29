@@ -154,9 +154,12 @@
         const data = await res.json();
         let markdown = data.response;
 
-        // Arreglos para LaTeX
-        markdown = markdown.replace(/\[\s*(.*?)\s*\]/gs, '\\[$1\\]');
-        markdown = markdown.replace(/\\?\(([^()]*\\?[^()]*)\\?\)/g, '\\($1\\)');
+// Formato para LaTeX en bloque
+markdown = markdown.replace(/\[\s*(.*?)\s*\]/gs, '\\[$1\\]');
+
+// Formato para LaTeX inline mejorado: solo si detecta fórmulas comunes dentro de paréntesis
+markdown = markdown.replace(/\((\\[a-zA-Z0-9_{}^\\]+)\)/g, '\\($1\\)');
+
 
         respuestaEl.innerHTML = marked.parse(markdown);
         if (window.MathJax) MathJax.typesetPromise([respuestaEl]);
