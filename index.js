@@ -85,6 +85,16 @@ app.post('/chat', async (req, res) => {
   }
 });
 
+// Ruta para limpiar la memoria (thread_id) de una sesión
+app.post('/clear', (req, res) => {
+  const { session_id } = req.body;
+  if (session_id && threads[session_id]) {
+    delete threads[session_id];
+    console.log(`🧠 Memoria borrada para sesión: ${session_id}`);
+  }
+  res.json({ status: "ok" });
+});
+
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Servidor corriendo en puerto ${port}`);
