@@ -3,11 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <title>Chat con Asistente AI</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 2rem; background-color: #f9f9f9; text-align: center; }
-    #chat-box { max-width: 600px; margin: 0 auto; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    input, button { padding: 0.5rem; margin-top: 1rem; width: 100%; }
-    #respuesta { margin-top: 1rem; background: #efefef; padding: 0.5rem; border-radius: 4px; min-height: 80px; }
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background-color: #f9f9f9;
+      text-align: center;
+    }
+
+    #chat-box {
+      max-width: 700px;
+      margin: 0 auto;
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    input, button {
+      padding: 0.5rem;
+      margin-top: 1rem;
+      width: 100%;
+      font-size: 1rem;
+    }
+
+    #respuesta {
+      margin-top: 1rem;
+      background: #f0f0f0;
+      padding: 1rem;
+      border-radius: 6px;
+      text-align: left;
+      font-family: system-ui, sans-serif;
+      min-height: 80px;
+    }
+
+    #respuesta a {
+      color: #0077cc;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -19,19 +53,34 @@
   </div>
 
   <script>
+    const input = document.getElementById("input");
+    const respuestaDiv = document.getElementById("respuesta");
+
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        enviarMensaje();
+      }
+    });
+
     async function enviarMensaje() {
-      const mensaje = document.getElementById("input").value;
-      const respuestaDiv = document.getElementById("respuesta");
+      const mensaje = input.value.trim();
+      if (!mensaje) return;
+
       respuestaDiv.textContent = "Cargando...";
 
       try {
         const res = await fetch("/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: mensaje })
+          body: JSON.stringify({
+            message: mensaje,
+            session_id: "usuario-demo"
+          })
         });
+
         const data = await res.json();
-        respuestaDiv.textContent = data.response;
+        const markdown = data.response;
+        respuestaDiv.innerHTML = marked.parse(markdown);
       } catch {
         respuestaDiv.textContent = "Error al contactar al asistente.";
       }
