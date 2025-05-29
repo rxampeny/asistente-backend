@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Chat con Asistente AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
     window.MathJax = {
@@ -14,9 +15,9 @@
   <style>
     body {
       font-family: sans-serif;
-      padding: 2rem;
+      margin: 0;
+      padding: 1rem;
       background-color: #f9f9f9;
-      text-align: center;
     }
 
     #chat-box {
@@ -29,16 +30,19 @@
     }
 
     input {
-      padding: 0.5rem;
+      padding: 0.6rem;
       margin-top: 1rem;
       width: 100%;
       font-size: 1rem;
+      box-sizing: border-box;
     }
 
     button {
-      padding: 0.5rem;
+      padding: 0.6rem;
       font-size: 1rem;
       cursor: pointer;
+      border: none;
+      border-radius: 5px;
     }
 
     .bloque {
@@ -69,20 +73,32 @@
       display: flex;
       gap: 0.5rem;
       margin-top: 1rem;
+      flex-wrap: wrap;
     }
 
     .botones button {
-      flex: 1;
+      flex: 1 1 48%;
+      background-color: #eee;
+    }
+
+    @media (max-width: 600px) {
+      .botones {
+        flex-direction: column;
+      }
+
+      .botones button {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
-  <h2>Chat con Asistente AI</h2>
   <div id="chat-box">
+    <h2>Chat con Asistente AI</h2>
     <input id="input" placeholder="Escribe tu mensaje..." />
     <div class="botones">
       <button onclick="enviarMensaje()">Enviar</button>
-      <button onclick="limpiarHistorial()" style="background:#ddd;">Limpiar historial</button>
+      <button onclick="limpiarHistorial()">Limpiar historial</button>
     </div>
     <div id="historial"></div>
   </div>
@@ -92,10 +108,17 @@
     const historialDiv = document.getElementById("historial");
     const sessionId = "usuario-demo";
 
+    // Al cargar: limpiar memoria
+    window.onload = async () => {
+      await fetch("/clear", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId })
+      });
+    };
+
     input.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") {
-        enviarMensaje();
-      }
+      if (e.key === "Enter") enviarMensaje();
     });
 
     async function enviarMensaje() {
@@ -131,7 +154,7 @@
         const data = await res.json();
         let markdown = data.response;
 
-        // ✅ Arreglos para fórmulas en bloque e inline
+        // Arreglos para LaTeX
         markdown = markdown.replace(/\[\s*(.*?)\s*\]/gs, '\\[$1\\]');
         markdown = markdown.replace(/\\?\(([^()]*\\?[^()]*)\\?\)/g, '\\($1\\)');
 
