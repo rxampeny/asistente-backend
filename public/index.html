@@ -47,6 +47,14 @@
       margin-top: 1rem;
       text-align: left;
     }
+
+    #historial {
+      display: flex;
+      flex-direction: column-reverse;
+      overflow-y: auto;
+      max-height: 400px;
+      margin-top: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -71,20 +79,23 @@
       const mensaje = input.value.trim();
       if (!mensaje) return;
 
-      // Mostrar mensaje del usuario
       const mensajeUsuario = document.createElement("div");
       mensajeUsuario.className = "mensaje-usuario";
       mensajeUsuario.textContent = "Tú: " + mensaje;
-      historialDiv.appendChild(mensajeUsuario);
 
-      // Limpia input
-      input.value = "";
-
-      // Mostrar indicador de carga
       const respuestaDiv = document.createElement("div");
       respuestaDiv.className = "respuesta";
       respuestaDiv.textContent = "Cargando...";
-      historialDiv.appendChild(respuestaDiv);
+
+      // prepend nuevos mensajes
+      historialDiv.prepend(respuestaDiv);
+      historialDiv.prepend(mensajeUsuario);
+
+      // limpiar input
+      input.value = "";
+
+      // scroll automático al top
+      historialDiv.scrollTop = 0;
 
       try {
         const res = await fetch("/chat", {
@@ -106,3 +117,4 @@
   </script>
 </body>
 </html>
+
