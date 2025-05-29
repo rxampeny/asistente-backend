@@ -6,7 +6,7 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
     window.MathJax = {
-      tex: { inlineMath: [['$', '$'], ['\\\\(', '\\\\)']] },
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
       svg: { fontCache: 'global' }
     };
   </script>
@@ -128,12 +128,13 @@
         });
 
         const data = await res.json();
-        const markdown = data.response;
-        // Arreglo para que [ ... ] se interprete como ecuación LaTeX de bloque
-let latexFix = markdown.replace(/\[\s*(.*?)\s*\]/gs, '\\[$1\\]');
-respuestaEl.innerHTML = marked.parse(latexFix);
-if (window.MathJax) MathJax.typesetPromise([respuestaEl]);
+        let markdown = data.response;
 
+        // ✅ Arreglos para LaTeX block e inline
+        markdown = markdown.replace(/\[\s*(.*?)\s*\]/gs, '\\[$1\\]');
+        markdown = markdown.replace(/\\?\\?\(([^()]+?)\\?\\?\)/g, '\\($1\\)');
+
+        respuestaEl.innerHTML = marked.parse(markdown);
         if (window.MathJax) MathJax.typesetPromise([respuestaEl]);
       } catch {
         respuestaEl.innerHTML = "<em>Error al contactar al asistente.</em>";
