@@ -154,11 +154,11 @@
         const data = await res.json();
         let markdown = data.response;
 
-// Formato para LaTeX en bloque
-markdown = markdown.replace(/\[\s*(.*?)\s*\]/gs, '\\[$1\\]');
+// Arreglos para LaTeX
+markdown = markdown.replace(/\[\s*(.*?)\s*\]/gs, '\\[$1\\]');           // Bloque
+markdown = markdown.replace(/\((\\[a-zA-Z0-9_{}^\\]+)\)/g, '\\($1\\)'); // Inline
+markdown = markdown.replace(/\\\\/g, '\\'); // Desescapar doble barra
 
-// Formato para LaTeX inline mejorado: solo si detecta fórmulas comunes dentro de paréntesis
-markdown = markdown.replace(/\((\\[a-zA-Z0-9_{}^\\]+)\)/g, '\\($1\\)');
 
 
         respuestaEl.innerHTML = marked.parse(markdown);
