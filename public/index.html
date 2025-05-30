@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <title>Chat con Asistente AI</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- MathJax config -->
   <script>
     window.MathJax = {
       tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
@@ -12,10 +13,11 @@
     };
   </script>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script id="MathJax-script" async
-  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-</script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <script id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+  </script>
+
+  <!-- Estilos -->
   <style>
     body {
       font-family: sans-serif;
@@ -107,12 +109,13 @@
     <div id="historial"></div>
   </div>
 
+  <!-- Scripts -->
   <script>
     const input = document.getElementById("input");
     const historialDiv = document.getElementById("historial");
     const sessionId = "usuario-demo";
 
-    // Al cargar: limpiar memoria
+    // Limpiar memoria al cargar
     window.onload = async () => {
       await fetch("/clear", {
         method: "POST",
@@ -124,6 +127,17 @@
     input.addEventListener("keydown", function (e) {
       if (e.key === "Enter") enviarMensaje();
     });
+
+    function limpiarYFormatearLaTeX(texto) {
+      if (!texto) return "";
+
+      return texto
+        .replace(/【\d+:\d+†[^】]+】/g, "") // eliminar referencias
+        .replace(/\[\s*\\?(.*?)\\?\s*\]/gs, (_, f) => `\\[${f.trim()}\\]`) // bloque LaTeX
+        .replace(/\(\s*\\?([a-zA-Z0-9_\{\}\^\~\\]+.*?)\\?\s*\)/g, (_, f) => `\\(${f.trim()}\\)`) // inline LaTeX
+        .replace(/\\\\/g, '\\') // doble barra
+        .trim();
+    }
 
     async function enviarMensaje() {
       const mensaje = input.value.trim();
@@ -156,16 +170,8 @@
         });
 
         const data = await res.json();
-        let markdown = data.response;
-
-// Arreglos para LaTeX
-markdown = markdown.replace(/\[\s*(.*?)\s*\]/gs, '\\[$1\\]');           // Bloque
-markdown = markdown.replace(/\((\\[a-zA-Z0-9_{}^\\]+)\)/g, '\\($1\\)'); // Inline
-markdown = markdown.replace(/\\\\/g, '\\'); // Desescapar doble barra
-
-
-
-        respuestaEl.innerHTML = marked.parse(markdown);
+        const respuestaFormateada = limpiarYFormatearLaTeX(data.response);
+        respuestaEl.innerHTML = respuestaFormateada;
         if (window.MathJax) MathJax.typesetPromise([respuestaEl]);
       } catch {
         respuestaEl.innerHTML = "<em>Error al contactar al asistente.</em>";
