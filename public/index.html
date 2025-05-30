@@ -128,22 +128,33 @@
       if (e.key === "Enter") enviarMensaje();
     });
 
- function limpiarYFormatearLaTeX(texto) {
+function limpiarYFormatearLaTeX(texto) {
   if (!texto) return "";
 
   return texto
-    // Eliminar referencias como  
+    // Eliminar referencias automáticas
     .replace(/【\d+:\d+†[^】]+】/g, "")
-    // Reemplazar fórmulas entre corchetes por bloque: \[...\]
+
+    // Convertir [ ... ] → bloque \[ ... \]
     .replace(/\[\s*\\?(.*?)\\?\s*\]/gs, (_, f) => `\\[${f.trim()}\\]`)
-    // Reemplazar ((...)) como fórmula en bloque también
+
+    // Convertir (( ... )) también como bloque
     .replace(/\(\(\s*\\?(.*?)\\?\s*\)\)/gs, (_, f) => `\\[${f.trim()}\\]`)
-    // Variables matemáticas como (s), (n), (z), etc. a inline: \(s\)
+
+    // Variables (s), (n), etc. como inline \( ... \)
     .replace(/\(\s*\\?([a-zA-Z0-9_\{\}\^\~\\]+?)\\?\s*\)/g, (_, f) => `\\(${f.trim()}\\)`)
-    // Eliminar \left y \right que no estén balanceados
-    .replace(/\\left/g, "")
-    .replace(/\\right/g, "")
-    .replace(/\\\\/g, '\\') // desdoblar doble barra
+
+    // Corregir delimitadores mal cerrados: \left[ sin \right]
+    .replace(/\\left\[/g, "\\left[")
+    .replace(/\\right(?![\[\]\)\}])/g, "\\right]") // añade \right] si falta
+
+    // Eliminar \left o \right no balanceados
+    .replace(/\\left(?![\[\(\{])/g, "")
+    .replace(/\\right(?![\]\)\}])/g, "")
+
+    // Desdoblar doble barra
+    .replace(/\\\\/g, '\\')
+
     .trim();
 }
 
