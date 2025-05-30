@@ -128,18 +128,25 @@
       if (e.key === "Enter") enviarMensaje();
     });
 
-    function limpiarYFormatearLaTeX(texto) {
-      if (!texto) return "";
+ function limpiarYFormatearLaTeX(texto) {
+  if (!texto) return "";
 
-      return texto
-        .replace(/【\d+:\d+†[^】]+】/g, "") // eliminar referencias
-        .replace(/\[\s*\\?(.*?)\\?\s*\]/gs, (_, f) => `\\[${f.trim()}\\]`) // bloque LaTeX
-        .replace(/\(\s*\\?([a-zA-Z0-9_\{\}\^\~\\]+.*?)\\?\s*\)/g, (_, f) => `\\(${f.trim()}\\)`) // inline LaTeX
-        .replace(/\\\\/g, '\\') // doble barra
-        .replace(/\\left/g, '')  // elimina \left
-         .replace(/\\right/g, '') // elimina \right
-        .trim();
-    }
+  return texto
+    // Eliminar referencias como  
+    .replace(/【\d+:\d+†[^】]+】/g, "")
+    // Reemplazar fórmulas entre corchetes por bloque: \[...\]
+    .replace(/\[\s*\\?(.*?)\\?\s*\]/gs, (_, f) => `\\[${f.trim()}\\]`)
+    // Reemplazar ((...)) como fórmula en bloque también
+    .replace(/\(\(\s*\\?(.*?)\\?\s*\)\)/gs, (_, f) => `\\[${f.trim()}\\]`)
+    // Variables matemáticas como (s), (n), (z), etc. a inline: \(s\)
+    .replace(/\(\s*\\?([a-zA-Z0-9_\{\}\^\~\\]+?)\\?\s*\)/g, (_, f) => `\\(${f.trim()}\\)`)
+    // Eliminar \left y \right que no estén balanceados
+    .replace(/\\left/g, "")
+    .replace(/\\right/g, "")
+    .replace(/\\\\/g, '\\') // desdoblar doble barra
+    .trim();
+}
+
 
     async function enviarMensaje() {
       const mensaje = input.value.trim();
