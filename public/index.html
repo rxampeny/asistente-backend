@@ -136,6 +136,8 @@
         .replace(/\[\s*\\?(.*?)\\?\s*\]/gs, (_, f) => `\\[${f.trim()}\\]`) // bloque LaTeX
         .replace(/\(\s*\\?([a-zA-Z0-9_\{\}\^\~\\]+.*?)\\?\s*\)/g, (_, f) => `\\(${f.trim()}\\)`) // inline LaTeX
         .replace(/\\\\/g, '\\') // doble barra
+        .replace(/\\left/g, '')  // elimina \left
+         .replace(/\\right/g, '') // elimina \right
         .trim();
     }
 
