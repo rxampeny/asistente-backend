@@ -14,10 +14,9 @@
   </script>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async
-    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-  </script>
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-  <!-- Estilos -->
   <style>
     body {
       font-family: sans-serif;
@@ -57,6 +56,8 @@
       border-radius: 6px;
       margin-bottom: 1rem;
       text-align: left;
+      opacity: 1;
+      transition: opacity 0.3s ease;
     }
 
     .pregunta {
@@ -87,6 +88,10 @@
       background-color: #eee;
     }
 
+    .fade-out {
+      opacity: 0 !important;
+    }
+
     @media (max-width: 600px) {
       .botones {
         flex-direction: column;
@@ -109,13 +114,11 @@
     <div id="historial"></div>
   </div>
 
-  <!-- Scripts -->
   <script>
     const input = document.getElementById("input");
     const historialDiv = document.getElementById("historial");
     const sessionId = "usuario-demo";
 
-    // Limpiar memoria al cargar
     window.onload = async () => {
       await fetch("/clear", {
         method: "POST",
@@ -128,36 +131,19 @@
       if (e.key === "Enter") enviarMensaje();
     });
 
-function limpiarYFormatearLaTeX(texto) {
-  if (!texto) return "";
+    function limpiarYFormatearLaTeX(texto) {
+      if (!texto) return "";
 
-  return texto
-    // Eliminar referencias automáticas
-    .replace(/【\d+:\d+†[^】]+】/g, "")
-
-    // Convertir [ ... ] → bloque \[ ... \]
-    .replace(/\[\s*\\?(.*?)\\?\s*\]/gs, (_, f) => `\\[${f.trim()}\\]`)
-
-    // Convertir (( ... )) también como bloque
-    .replace(/\(\(\s*\\?(.*?)\\?\s*\)\)/gs, (_, f) => `\\[${f.trim()}\\]`)
-
-    // Variables (s), (n), etc. como inline \( ... \)
-    .replace(/\(\s*\\?([a-zA-Z0-9_\{\}\^\~\\]+?)\\?\s*\)/g, (_, f) => `\\(${f.trim()}\\)`)
-
-    // Corregir delimitadores mal cerrados: \left[ sin \right]
-    .replace(/\\left\[/g, "\\left[")
-    .replace(/\\right(?![\[\]\)\}])/g, "\\right]") // añade \right] si falta
-
-    // Eliminar \left o \right no balanceados
-    .replace(/\\left(?![\[\(\{])/g, "")
-    .replace(/\\right(?![\]\)\}])/g, "")
-
-    // Desdoblar doble barra
-    .replace(/\\\\/g, '\\')
-
-    .trim();
-}
-
+      return texto
+        .replace(/【\d+:\d+†[^】]+】/g, "")
+        .replace(/\[\s*\\?(.*?)\\?\s*\]/gs, (_, f) => `\\[${f.trim()}\\]`)
+        .replace(/\(\(\s*\\?(.*?)\\?\s*\)\)/gs, (_, f) => `\\[${f.trim()}\\]`)
+        .replace(/\(\s*\\?([a-zA-Z0-9_\{\}\^\~\\]+?)\\?\s*\)/g, (_, f) => `\\(${f.trim()}\\)`)
+        .replace(/\\\\/g, '\\')
+        .replace(/\\left/g, "")
+        .replace(/\\right/g, "")
+        .trim();
+    }
 
     async function enviarMensaje() {
       const mensaje = input.value.trim();
@@ -177,7 +163,8 @@ function limpiarYFormatearLaTeX(texto) {
 
       bloque.appendChild(preguntaEl);
       bloque.appendChild(respuestaEl);
-      historialDiv.prepend(bloque);
+      historialDiv.appendChild(bloque);
+      historialDiv.scrollTop = historialDiv.scrollHeight;
 
       try {
         const res = await fetch("/chat", {
@@ -191,15 +178,25 @@ function limpiarYFormatearLaTeX(texto) {
 
         const data = await res.json();
         const respuestaFormateada = limpiarYFormatearLaTeX(data.response);
-        respuestaEl.innerHTML = respuestaFormateada;
-        if (window.MathJax) MathJax.typesetPromise([respuestaEl]);
+        respuestaEl.innerHTML = marked.parse(respuestaFormateada);
+        if (window.MathJax) await MathJax.typesetPromise([respuestaEl]);
+
+        setTimeout(() => {
+          historialDiv.scrollTop = historialDiv.scrollHeight;
+        }, 100);
       } catch {
         respuestaEl.innerHTML = "<em>Error al contactar al asistente.</em>";
       }
     }
 
     async function limpiarHistorial() {
-      historialDiv.innerHTML = "";
+      const bloques = document.querySelectorAll(".bloque");
+      bloques.forEach((bloque, i) => {
+        setTimeout(() => {
+          bloque.classList.add("fade-out");
+          setTimeout(() => bloque.remove(), 300);
+        }, i * 50);
+      });
 
       try {
         await fetch("/clear", {
@@ -214,5 +211,4 @@ function limpiarYFormatearLaTeX(texto) {
   </script>
 </body>
 </html>
-
 
