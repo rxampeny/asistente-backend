@@ -14,7 +14,10 @@
   </script>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async
-    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+  </script>
+
+  <!-- marked.js para Markdown -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
   <style>
@@ -56,8 +59,6 @@
       border-radius: 6px;
       margin-bottom: 1rem;
       text-align: left;
-      opacity: 1;
-      transition: opacity 0.3s ease;
     }
 
     .pregunta {
@@ -86,10 +87,6 @@
     .botones button {
       flex: 1 1 48%;
       background-color: #eee;
-    }
-
-    .fade-out {
-      opacity: 0 !important;
     }
 
     @media (max-width: 600px) {
@@ -131,17 +128,19 @@
       if (e.key === "Enter") enviarMensaje();
     });
 
-    function limpiarYFormatearLaTeX(texto) {
+    function formatearRespuestaMathJax(texto) {
       if (!texto) return "";
 
       return texto
-        .replace(/【\d+:\d+†[^】]+】/g, "")
-        .replace(/\[\s*\\?(.*?)\\?\s*\]/gs, (_, f) => `\\[${f.trim()}\\]`)
-        .replace(/\(\(\s*\\?(.*?)\\?\s*\)\)/gs, (_, f) => `\\[${f.trim()}\\]`)
-        .replace(/\(\s*\\?([a-zA-Z0-9_\{\}\^\~\\]+?)\\?\s*\)/g, (_, f) => `\\(${f.trim()}\\)`)
-        .replace(/\\\\/g, '\\')
+        .replace(/【\d+:\d+\u2020[^】]+】/g, "")
+        .replace(/\[\[\s*(.*?)\s*\]\]/gs, (_, m) => `\\[${m.trim()}\\]`)
+        .replace(/\(\(\s*(.*?)\s*\)\)/gs, (_, m) => `\\[${m.trim()}\\]`)
+        .replace(/\(\s*([a-zA-Z0-9_\\{}\^\+\-\*/=\s]+)\s*\)/g, (_, m) => `\\(${m.trim()}\\)`)
+        .replace(/\\left(?![\(\[\{])/g, "")
+        .replace(/\\right(?![\)\]\}])/g, "")
         .replace(/\\left/g, "")
         .replace(/\\right/g, "")
+        .replace(/\\\\/g, "\\")
         .trim();
     }
 
@@ -163,41 +162,30 @@
 
       bloque.appendChild(preguntaEl);
       bloque.appendChild(respuestaEl);
-      historialDiv.appendChild(bloque);
-      historialDiv.scrollTop = historialDiv.scrollHeight;
+      historialDiv.prepend(bloque);
 
       try {
         const res = await fetch("/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message: mensaje,
-            session_id: sessionId
-          })
+          body: JSON.stringify({ message: mensaje, session_id: sessionId })
         });
 
         const data = await res.json();
-        const respuestaFormateada = limpiarYFormatearLaTeX(data.response);
-        respuestaEl.innerHTML = marked.parse(respuestaFormateada);
-        if (window.MathJax) await MathJax.typesetPromise([respuestaEl]);
+        const respuestaFormateada = marked.parse(formatearRespuestaMathJax(data.response));
+        respuestaEl.innerHTML = respuestaFormateada;
+        if (window.MathJax) MathJax.typesetPromise([respuestaEl]);
 
         setTimeout(() => {
-          historialDiv.scrollTop = historialDiv.scrollHeight;
-        }, 100);
+          historialDiv.scrollTop = 0;
+        }, 200);
       } catch {
         respuestaEl.innerHTML = "<em>Error al contactar al asistente.</em>";
       }
     }
 
     async function limpiarHistorial() {
-      const bloques = document.querySelectorAll(".bloque");
-      bloques.forEach((bloque, i) => {
-        setTimeout(() => {
-          bloque.classList.add("fade-out");
-          setTimeout(() => bloque.remove(), 300);
-        }, i * 50);
-      });
-
+      historialDiv.innerHTML = "";
       try {
         await fetch("/clear", {
           method: "POST",
@@ -211,4 +199,5 @@
   </script>
 </body>
 </html>
+
 
