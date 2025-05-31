@@ -5,7 +5,7 @@
   <title>Chat con Asistente AI</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- MathJax config -->
+  <!-- MathJax -->
   <script>
     window.MathJax = {
       tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
@@ -14,8 +14,7 @@
   </script>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async
-    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-  </script>
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
   <!-- marked.js para Markdown -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -130,9 +129,8 @@
 
     function formatearRespuestaMathJax(texto) {
       if (!texto) return "";
-
       return texto
-        .replace(/【\d+:\d+\u2020[^】]+】/g, "")
+        .replace(/【\d+:\d+\u2020[^】]+】/g, "") // eliminar referencias
         .replace(/\[\[\s*(.*?)\s*\]\]/gs, (_, m) => `\\[${m.trim()}\\]`)
         .replace(/\(\(\s*(.*?)\s*\)\)/gs, (_, m) => `\\[${m.trim()}\\]`)
         .replace(/\(\s*([a-zA-Z0-9_\\{}\^\+\-\*/=\s]+)\s*\)/g, (_, m) => `\\(${m.trim()}\\)`)
@@ -172,8 +170,7 @@
         });
 
         const data = await res.json();
-        const respuestaFormateada = marked.parse(formatearRespuestaMathJax(data.response));
-        respuestaEl.innerHTML = respuestaFormateada;
+        respuestaEl.innerHTML = marked.parse(formatearRespuestaMathJax(data.response));
         if (window.MathJax) MathJax.typesetPromise([respuestaEl]);
 
         setTimeout(() => {
